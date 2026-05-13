@@ -1,0 +1,20 @@
+Question: [overview] What was the primary objective of Apollo 11?
+Expected response: Apollo 11 was focused on achieving the first crewed lunar landing and returning the crew safely to Earth, with relevant context cited from Apollo 11 mission documents.
+
+Question: [emergency] What problem made Apollo 13 a mission emergency?
+Expected response: The answer should identify the spacecraft systems emergency, explain it using retrieved Apollo 13 context, and avoid unsupported details.
+
+Question: [technical] What type of source material is available for the Challenger mission?
+Expected response: The answer should mention mission audio transcript material when it is retrieved from the Challenger collection and cite the matching source header.
+
+Question: [disaster analysis] Compare how Apollo 11 and Apollo 13 differ in the retrieved mission records.
+Expected response: The answer should synthesize retrieved context from both missions and clearly separate evidence for each mission.
+
+Question: [crew] Who were the Apollo 11 crew members discussed in the retrieved mission records?
+Expected response: The answer should identify crew information only when it is present in retrieved Apollo 11 context and cite the source headers.
+
+Question: [timeline] What does the retrieved context say about the timing or sequence of Challenger launch operations?
+Expected response: The answer should summarize only the timeline evidence retrieved from Challenger transcript context and cite the matching source headers.
+
+Question: [insufficient context] If the retrieved context does not answer a question, how should the system respond?
+Expected response: The answer should state that the available NASA context is insufficient and identify what additional evidence would be needed.

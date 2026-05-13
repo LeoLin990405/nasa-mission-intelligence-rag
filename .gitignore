@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+chroma_embedding_text_only.log
+chroma_db*/
+batch_evaluation_results.json
+.env
+*.zip
