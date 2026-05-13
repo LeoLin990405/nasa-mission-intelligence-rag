@@ -20,8 +20,9 @@ text instead of relying only on model memory.
    assistant to act as a NASA mission expert, cite retrieved sources, and avoid
    unsupported claims.
 4. `ragas_evaluator.py` evaluates answer quality with RAGAS response relevancy
-   and faithfulness. It supports both one-off real-time evaluation and batch
-   evaluation using `evaluation_dataset.txt`.
+   and faithfulness, plus documented ROUGE-L and lexical context precision
+   metrics. It supports both one-off real-time evaluation and batch evaluation
+   using `evaluation_dataset.txt`.
 5. `chat.py` provides the Streamlit interface, including model selection,
    retrieval top-k, mission filtering, answer generation, and evaluation display.
 

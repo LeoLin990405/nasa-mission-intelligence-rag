@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 from statistics import mean
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence, Tuple
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -61,23 +61,119 @@ def _build_ragas_models():
     return evaluator_llm, evaluator_embeddings
 
 
-def evaluate_response_quality(question: str, answer: str, contexts: List[str]) -> Dict[str, float]:
-    """Evaluate one (question, answer, retrieved contexts) triple with RAGAS."""
+def _normalize_evaluation_inputs(
+    question: object,
+    answer: object,
+    contexts: object,
+) -> Tuple[Optional[str], Optional[str], Optional[List[str]], Optional[str]]:
+    """Validate and normalize evaluator inputs without raising on bad data."""
+    if not isinstance(question, str):
+        return None, None, None, "Question must be a string"
+    if not question.strip():
+        return None, None, None, "Question must not be empty"
+
+    if not isinstance(answer, str):
+        return None, None, None, "Answer must be a string"
+    if not answer.strip():
+        return None, None, None, "Answer must not be empty"
+
+    if isinstance(contexts, str):
+        raw_contexts: Sequence[object] = [contexts]
+    elif isinstance(contexts, Sequence):
+        raw_contexts = contexts
+    else:
+        return None, None, None, "Contexts must be a list of strings"
+
+    normalized_contexts: List[str] = []
+    for index, context in enumerate(raw_contexts):
+        if not isinstance(context, str):
+            return None, None, None, f"Context at index {index} must be a string"
+        cleaned = context.strip()
+        if cleaned:
+            normalized_contexts.append(cleaned)
+
+    if not normalized_contexts:
+        return None, None, None, "No retrieved contexts available for evaluation"
+
+    return question.strip(), answer.strip(), normalized_contexts, None
+
+
+def _tokenize_for_overlap(text: str) -> List[str]:
+    """Tokenize text for lightweight lexical evaluation metrics."""
+    import re
+
+    return re.findall(r"[A-Za-z0-9]+", text.lower())
+
+
+def _rouge_l_score(reference: str, candidate: str) -> float:
+    """Compute a compact ROUGE-L F1 score for extra, non-RAGAS coverage."""
+    reference_tokens = _tokenize_for_overlap(reference)
+    candidate_tokens = _tokenize_for_overlap(candidate)
+    if not reference_tokens or not candidate_tokens:
+        return 0.0
+
+    previous = [0] * (len(candidate_tokens) + 1)
+    for reference_token in reference_tokens:
+        current = [0]
+        for column, candidate_token in enumerate(candidate_tokens, start=1):
+            if reference_token == candidate_token:
+                current.append(previous[column - 1] + 1)
+            else:
+                current.append(max(previous[column], current[-1]))
+        previous = current
+
+    lcs = previous[-1]
+    precision = lcs / len(candidate_tokens)
+    recall = lcs / len(reference_tokens)
+    if precision + recall == 0:
+        return 0.0
+    return 2 * precision * recall / (precision + recall)
+
+
+def _context_precision_score(contexts: List[str], answer: str) -> float:
+    """Estimate how much of the answer is lexically supported by retrieved context."""
+    context_tokens = set(_tokenize_for_overlap(" ".join(contexts)))
+    answer_tokens = _tokenize_for_overlap(answer)
+    if not context_tokens or not answer_tokens:
+        return 0.0
+    supported_tokens = sum(1 for token in answer_tokens if token in context_tokens)
+    return supported_tokens / len(answer_tokens)
+
+
+def evaluate_response_quality(question: str, answer: str, contexts: List[str]) -> Dict[str, object]:
+    """Evaluate one (question, answer, retrieved contexts) triple.
+
+    The primary scores come from RAGAS response relevancy and faithfulness. The
+    evaluator also reports lightweight ROUGE-L and lexical context precision so
+    the project has an additional documented metric path even when RAGAS metric
+    availability changes across package versions.
+    """
+    normalized_question, normalized_answer, normalized_contexts, error = _normalize_evaluation_inputs(
+        question,
+        answer,
+        contexts,
+    )
+    if error:
+        return {"error": error}
+
+    assert normalized_question is not None
+    assert normalized_answer is not None
+    assert normalized_contexts is not None
+
+    scores: Dict[str, object] = {
+        "rouge_l": _rouge_l_score(" ".join(normalized_contexts), normalized_answer),
+        "context_precision": _context_precision_score(normalized_contexts, normalized_answer),
+    }
+
     if not RAGAS_AVAILABLE:
-        return {"error": "RAGAS or langchain-openai is not available"}
-    if not question or not question.strip():
-        return {"error": "Question must not be empty"}
-    if not answer or not answer.strip():
-        return {"error": "Answer must not be empty"}
-    if not contexts or not any(str(context).strip() for context in contexts):
-        return {"error": "No retrieved contexts available for evaluation"}
+        return {"error": "RAGAS or langchain-openai is not available", **scores}
 
     evaluator_llm, evaluator_embeddings = _build_ragas_models()
 
     sample = SingleTurnSample(
-        user_input=question,
-        response=answer,
-        retrieved_contexts=[str(context) for context in contexts if str(context).strip()],
+        user_input=normalized_question,
+        response=normalized_answer,
+        retrieved_contexts=normalized_contexts,
     )
 
     metrics = {
@@ -88,7 +184,6 @@ def evaluate_response_quality(question: str, answer: str, contexts: List[str]) -
         "faithfulness": Faithfulness(llm=evaluator_llm),
     }
 
-    scores: Dict[str, float] = {}
     for metric_name, metric in metrics.items():
         try:
             if hasattr(metric, "single_turn_score"):

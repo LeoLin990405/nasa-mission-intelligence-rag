@@ -136,6 +136,8 @@ Retrieval and LLM integration:
 Real-time evaluation:
 
 - `ragas_evaluator.evaluate_response_quality` evaluates one question/context/answer triple.
+- RAGAS metrics include response relevancy and faithfulness.
+- Additional documented metrics include local ROUGE-L and lexical context precision.
 - Empty or malformed inputs return clear error dictionaries instead of crashing.
 - `ragas_evaluator.py` also provides batch evaluation from `evaluation_dataset.txt`.
 
