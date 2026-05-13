@@ -10,6 +10,9 @@ import os
 from pathlib import Path
 from statistics import mean
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     from ragas import SingleTurnSample

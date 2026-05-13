@@ -1,6 +1,9 @@
 from typing import Dict, List
 import os
 from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def generate_response(openai_key: str, user_message: str, context: str, 
                      conversation_history: List[Dict], model: str = "gpt-3.5-turbo") -> str:
@@ -35,6 +38,7 @@ def generate_response(openai_key: str, user_message: str, context: str,
 
     messages.append({"role": "user", "content": user_message})
 
+    openai_key = openai_key or os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_COMPATIBLE_API_KEY")
     base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_COMPATIBLE_BASE_URL")
     client = OpenAI(api_key=openai_key, base_url=base_url)
     response = client.chat.completions.create(

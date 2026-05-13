@@ -37,13 +37,21 @@ Set an API key for OpenAI or an OpenAI-compatible provider:
 export OPENAI_API_KEY="YOUR_KEY"
 ```
 
+Or create a local `.env` file:
+
+```bash
+cp .env.example .env
+# edit .env and paste your provider key there
+```
+
 For compatible providers, also set a base URL:
 
 ```bash
 export OPENAI_BASE_URL="https://your-provider.example/v1"
 ```
 
-Do not commit API keys or provider credentials.
+Do not commit API keys or provider credentials. `.env` is ignored by git, while
+`.env.example` documents the required variables without exposing secrets.
 
 ## Build The Vector Store
 
@@ -51,7 +59,6 @@ Run the embedding pipeline against the included NASA text files:
 
 ```bash
 python embedding_pipeline.py \
-  --openai-key "$OPENAI_API_KEY" \
   --data-path ./data_text \
   --chroma-dir ./chroma_db_openai \
   --collection-name nasa_space_missions_text \
@@ -67,6 +74,9 @@ python embedding_pipeline.py --openai-key "$OPENAI_API_KEY" --stats-only
 python embedding_pipeline.py --openai-key "$OPENAI_API_KEY" --update-mode update
 python embedding_pipeline.py --openai-key "$OPENAI_API_KEY" --update-mode replace
 ```
+
+If `OPENAI_API_KEY` is already set in the environment or `.env`, the
+`--openai-key` flag is optional.
 
 The pipeline stores per-chunk metadata including source, file path, mission,
 data type, document category, chunk index, chunk start/end, and chunk count.

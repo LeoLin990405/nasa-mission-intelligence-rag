@@ -57,9 +57,12 @@ reference for testing.
 2. Build or inspect the vector store:
 
    ```bash
-   python embedding_pipeline.py --openai-key "$OPENAI_API_KEY" --data-path ./data_text
-   python embedding_pipeline.py --openai-key "$OPENAI_API_KEY" --stats-only
+   python embedding_pipeline.py --data-path ./data_text
+   python embedding_pipeline.py --stats-only
    ```
+
+   `OPENAI_API_KEY` can be supplied through the shell environment, a local
+   untracked `.env` file, or Streamlit secrets for the UI.
 
 3. Launch the app:
 

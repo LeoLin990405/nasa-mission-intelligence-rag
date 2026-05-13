@@ -17,6 +17,9 @@ import llm_client
 
 from pathlib import Path
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # RAGAS imports
 try:
@@ -112,6 +115,13 @@ def display_evaluation_metrics(scores: Dict[str, float]):
             # Add progress bar
             st.sidebar.progress(score)
 
+def get_secret(name: str, default: str = "") -> str:
+    """Read optional Streamlit secrets without requiring a secrets file."""
+    try:
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
 def main():
     st.title("🚀 NASA Space Mission Chat with Evaluation")
     st.markdown("Chat with AI about NASA space missions with real-time quality evaluation")
@@ -168,6 +178,8 @@ def main():
             value=(
                 os.getenv("OPENAI_API_KEY")
                 or os.getenv("OPENAI_COMPATIBLE_API_KEY")
+                or get_secret("OPENAI_API_KEY")
+                or get_secret("OPENAI_COMPATIBLE_API_KEY")
                 or os.getenv("DASHSCOPE_API_KEY")
                 or os.getenv("MOONSHOT_API_KEY")
                 or os.getenv("ZHIPU_API_KEY")
